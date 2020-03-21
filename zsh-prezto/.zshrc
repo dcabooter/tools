@@ -18,14 +18,8 @@ fi
 # Set clobber
 setopt CLOBBER
 
-# Aliases
-alias oct="octant 2>/dev/null"
-
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # Autocompletion kubectl
 source <(kubectl completion zsh)
-
-# DSO config
-[[ ! -f ~/.dsorc ]] || source ~/.dsorc
