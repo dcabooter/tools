@@ -15,8 +15,9 @@ fi
 # Make tilix happy
 [[ $TILIX_ID ]] || [[ $VTE_VERSION ]] && source /etc/profile.d/vte.sh
 
-# Set clobber
+# Override some options
 setopt CLOBBER
+setopt SH_WORD_SPLIT
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
