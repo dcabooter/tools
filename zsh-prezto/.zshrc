@@ -12,9 +12,6 @@ fi
 
 # Customize to your needs...
 
-# Make tilix happy
-[[ $TILIX_ID ]] || [[ $VTE_VERSION ]] && source /etc/profile.d/vte.sh
-
 # Override some options
 setopt CLOBBER
 setopt SH_WORD_SPLIT
