@@ -32,6 +32,7 @@
       - postgresql-server
       - python3-psycopg2
 
+- block:
   - name: "Configure nginx vhost"
     template:
       src: wiki.conf
