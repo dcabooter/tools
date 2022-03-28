@@ -11,7 +11,7 @@ Set the following vars in `host_vars` or `group_vars` and modify them to your ne
 
 * Example config:
 ```
-server_alias: <insert server alias, leave empty for none>
+server_alias: <insert server alias>
 wiki_db_password: <insert ansible vault output>
 wiki_tls_crt: |
           <insert TLS certificate content>

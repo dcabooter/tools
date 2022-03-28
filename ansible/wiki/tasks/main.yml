@@ -1,11 +1,11 @@
 - block:
-  - name: Create wiki.js group
+  - name: "Create wiki.js group"
     group:
       name: wiki
       state: present
       gid: '3000'
 
-  - name: Create wiki.js user
+  - name: "Create wiki.js user"
     user:
       name: wiki
       state: present
@@ -14,15 +14,15 @@
       groups: wiki
 
 - block:
-  - name: Download nodejs repo setup
+  - name: "Download nodejs repo setup"
     get_url:
       url: https://rpm.nodesource.com/setup_16.x
       dest: /tmp/setup_nodejs
 
-  - name: Setup nodejs repo
+  - name: "Setup nodejs repo"
     command: bash /tmp/setup_nodejs
 
-  - name: Install packages
+  - name: "Install packages"
     dnf:
       name: "{{ item }}"
       state: present
@@ -32,7 +32,7 @@
       - postgresql-server
       - python3-psycopg2
 
-  - name: Configure nginx vhost
+  - name: "Configure nginx vhost"
     template:
       src: wiki.conf
       dest: /etc/nginx/conf.d/wiki.conf
@@ -40,11 +40,11 @@
       group: root
       mode: '0644'
 
-  - name: Configure postgres
+  - name: "Configure postgres"
     command: postgresql-setup --initdb
     ignore_errors: True
 
-  - name: Open httpd ports in firewalld
+  - name: "Open httpd ports in firewalld"
     firewalld:
       service: "{{ item }}"
       permanent: True
@@ -54,13 +54,13 @@
       - http
       - https
 
-  - name: Set httpd_can_network_connect selinux flag
+  - name: "Set httpd_can_network_connect selinux flag"
     seboolean:
       name: httpd_can_network_connect
       state: True
       persistent: True
 
-  - name: Copy TLS certificate
+  - name: "Copy TLS certificate"
     template:
       src: wiki.crt
       dest: /etc/pki/tls/certs/wiki.crt
@@ -68,7 +68,7 @@
       group: root
       mode: '0644'
 
-  - name: Copy TLS key
+  - name: "Copy TLS key"
     template:
       src: wiki.key
       dest: /etc/pki/tls/private/wiki.key
@@ -76,7 +76,7 @@
       group: root
       mode: '0644'
 
-  - name: Enable and start nginx and postgres
+  - name: "Enable and start nginx and postgres"
     systemd:
       name: "{{ item }}"
       state: started
@@ -131,7 +131,7 @@
     notify: Restart postgres
 
 - block:
-  - name: Create wiki.js dir
+  - name: "Create wiki.js dir"
     file:
       path: /var/wiki
       state: directory
@@ -139,7 +139,7 @@
       group: wiki
       mode: '0755'
 
-  - name: Get and extract wiki.js tar.gz file
+  - name: "Get and extract wiki.js tar.gz file"
     unarchive:
       src: https://github.com/Requarks/wiki/releases/download/v2.5.276/wiki-js.tar.gz
       dest: /var/wiki/
@@ -148,7 +148,7 @@
       mode: '0755'
       remote_src: True
 
-  - name: Copy wiki.js config
+  - name: "Copy wiki.js config"
     template:
       src: config.yml
       dest: /var/wiki/config.yml
@@ -156,7 +156,7 @@
       group: wiki
       mode: '0755'
 
-  - name: Create wiki.js systemd file
+  - name: "Create wiki.js systemd file"
     copy:
       src: wiki.service
       dest: /etc/systemd/system/wiki.service
@@ -164,7 +164,7 @@
       group: root
       mode: '0644'
 
-  - name: Start and enable wiki.js service
+  - name: "Start and enable wiki.js service"
     systemd:
       name: wiki.service
       state: started
