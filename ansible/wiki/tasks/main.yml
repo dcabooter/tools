@@ -1,0 +1,171 @@
+- block:
+  - name: Create wiki.js group
+    group:
+      name: wiki
+      state: present
+      gid: '3000'
+
+  - name: Create wiki.js user
+    user:
+      name: wiki
+      state: present
+      uid: '3000'
+      shell: /bin/bash
+      groups: wiki
+
+- block:
+  - name: Download nodejs repo setup
+    get_url:
+      url: https://rpm.nodesource.com/setup_16.x
+      dest: /tmp/setup_nodejs
+
+  - name: Setup nodejs repo
+    command: bash /tmp/setup_nodejs
+
+  - name: Install packages
+    dnf:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - nginx
+      - nodejs
+      - postgresql-server
+      - python3-psycopg2
+
+  - name: Configure nginx vhost
+    template:
+      src: wiki.conf
+      dest: /etc/nginx/conf.d/wiki.conf
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Configure postgres
+    command: postgresql-setup --initdb
+    ignore_errors: True
+
+  - name: Open httpd ports in firewalld
+    firewalld:
+      service: "{{ item }}"
+      permanent: True
+      immediate: True
+      state: enabled
+    loop:
+      - http
+      - https
+
+  - name: Set httpd_can_network_connect selinux flag
+    seboolean:
+      name: httpd_can_network_connect
+      state: True
+      persistent: True
+
+  - name: Copy TLS certificate
+    template:
+      src: wiki.crt
+      dest: /etc/pki/tls/certs/wiki.crt
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Copy TLS key
+    template:
+      src: wiki.key
+      dest: /etc/pki/tls/private/wiki.key
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Enable and start nginx and postgres
+    systemd:
+      name: "{{ item }}"
+      state: started
+      enabled: True
+    loop:
+      - nginx
+      - postgresql
+
+- block:
+  - name: "Create tmp dir for database actions"
+    file:
+      path: /var/lib/pgsql/.ansible/tmp
+      state: directory
+      owner: postgres
+      group: postgres
+      mode: '0700'
+
+  - name: "Create wiki.js database"
+    postgresql_db:
+      state: present
+      name: "wiki"
+    become: True
+    become_user: postgres
+
+  - name: "Create wiki.js database user"
+    postgresql_user:
+      state: present
+      name: "wiki"
+      password: "{{ wiki_db_password }}"
+      encrypted: True
+    become: True
+    become_user: postgres
+
+  - name: "Grant database user access to database"
+    postgresql_privs:
+      type: database
+      database: "wiki"
+      roles: "wiki"
+      grant_option: False
+      privs: all
+    become: True
+    become_user: postgres
+
+  - name: "Allow md5 connection for database user"
+    postgresql_pg_hba:
+      dest: "/var/lib/pgsql/data/pg_hba.conf"
+      contype: host
+      databases: wiki
+      method: md5
+      users: wiki
+      create: True
+    notify: Restart postgres
+
+- block:
+  - name: Create wiki.js dir
+    file:
+      path: /var/wiki
+      state: directory
+      owner: wiki
+      group: wiki
+      mode: '0755'
+
+  - name: Get and extract wiki.js tar.gz file
+    unarchive:
+      src: https://github.com/Requarks/wiki/releases/download/v2.5.276/wiki-js.tar.gz
+      dest: /var/wiki/
+      owner: wiki
+      group: wiki
+      mode: '0755'
+      remote_src: True
+
+  - name: Copy wiki.js config
+    template:
+      src: config.yml
+      dest: /var/wiki/config.yml
+      owner: wiki
+      group: wiki
+      mode: '0755'
+
+  - name: Create wiki.js systemd file
+    copy:
+      src: wiki.service
+      dest: /etc/systemd/system/wiki.service
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Start and enable wiki.js service
+    systemd:
+      name: wiki.service
+      state: started
+      enabled: True
