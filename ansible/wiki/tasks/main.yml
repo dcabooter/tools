@@ -124,7 +124,7 @@
 
   - name: "Enable pg_trgm extension for advanced searching"
     postgresql_query:
-      db: wiki
+      db: "wiki"
       query: "CREATE EXTENSION pg_trgm;"
     become: True
     become_user: postgres
