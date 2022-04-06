@@ -29,6 +29,7 @@
     loop:
       - nginx
       - nodejs
+      - postgresql-contrib
       - postgresql-server
       - python3-psycopg2
 
@@ -118,6 +119,13 @@
       roles: "wiki"
       grant_option: False
       privs: all
+    become: True
+    become_user: postgres
+
+  - name: Enable pg_trgm extension for advanced searching
+    postgresql_query:
+      db: wiki
+      query: "CREATE EXTENSION pg_trgm;"
     become: True
     become_user: postgres
 
