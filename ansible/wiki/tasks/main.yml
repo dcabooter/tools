@@ -62,21 +62,16 @@
       state: True
       persistent: True
 
-  - name: "Copy TLS certificate"
+  - name: "Copy TLS certificate and key"
     template:
-      src: wiki.crt
-      dest: /etc/pki/tls/certs/wiki.crt
+      src: "tls/{{ item }}"
+      dest: "/etc/pki/tls/{{ item }}"
       owner: root
       group: root
       mode: '0644'
-
-  - name: "Copy TLS key"
-    template:
-      src: wiki.key
-      dest: /etc/pki/tls/private/wiki.key
-      owner: root
-      group: root
-      mode: '0644'
+    loop:
+      - certs/wiki.crt
+      - private/wiki.key
 
   - name: "Enable and start nginx and postgres"
     systemd:
